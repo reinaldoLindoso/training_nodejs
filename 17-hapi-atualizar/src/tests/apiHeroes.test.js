@@ -4,11 +4,24 @@ const MOCK_HEROI_CADASTRAR = {
     nome: 'Chapolin Colorado',
     poder: 'Marreta bionica'
 }
-
+const MOCK_HEROI_INICIAL = {
+    nome: 'Gaviao negro',
+    poder: 'A Mira'
+}
+let MOCK_ID = ''
 describe('Suite de testes da API Heroes', function () {
 
     this.beforeAll(async () => {
         app = await api
+        const result = await app.inject({
+            method: 'POST',
+            url: '/herois',
+            payload: JSON.stringify(MOCK_HEROI_INICIAL)
+        })
+       
+        const dados = JSON.parse(result.payload)
+        MOCK_ID = dados._id
+
     })
 
     it('Lista de herois /herois', async () => {
@@ -73,5 +86,43 @@ describe('Suite de testes da API Heroes', function () {
         assert.ok(statusCode === 200)
         assert.notStrictEqual(_id, undefined)
         assert.deepEqual(message, 'Heroi cadastrado com sucesso')
+    })
+
+    it('Atualizar PATCH /herois/:id', async () =>{
+        const _id = MOCK_ID
+        const expected = {
+            poder: 'Super mira'
+        }
+        
+        const result = await app.inject({
+            method: 'PATCH',
+            url: `/herois/${_id}`,
+            payload: JSON.stringify(expected)
+        })
+
+        const statusCode = result.statusCode
+        const dados = JSON.parse(result.payload)
+
+        assert.ok(statusCode === 200)
+        assert.deepEqual(dados.message, 'Heroi atualizado com sucesso')
+    })
+
+    it('Atualizar PATCH /herois/:id - não deve atualizar com ID incorreto!', async () =>{
+        const _id = `5c47847f1d87b59589e7edb5`
+        const expected = {
+            poder: 'Super mira'
+        }
+        
+        const result = await app.inject({
+            method: 'PATCH',
+            url: `/herois/${_id}`,
+            payload: JSON.stringify(expected)
+        })
+
+        const statusCode = result.statusCode
+        const dados = JSON.parse(result.payload)
+
+        assert.ok(statusCode === 200)
+        assert.deepEqual(dados.message, 'Não foi possível atualizar')
     })
 })
